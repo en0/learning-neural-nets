@@ -17,3 +17,7 @@ class Perceptron(ABC):
     @abstractmethod
     def signal(self, input: float) -> None:
         ...
+
+    @abstractmethod
+    def attach_to(self, perceptron: "Perceptron"):
+        ...
