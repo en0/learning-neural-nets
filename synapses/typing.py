@@ -4,14 +4,31 @@ from typing import List, Callable
 Vector = List[float]
 Activator = Callable[[float], float]
 
-class Perceptron(ABC):
+
+class PerceptronInterface(ABC):
+
+    @property
+    @abstractmethod
+    def activator(self) -> Activator:
+        ...
+
+    @property
+    @abstractmethod
+    def bias(self) -> Activator:
+        ...
+
+    @property
+    @abstractmethod
+    def weights(self) -> Vector:
+        ...
+
     @property
     @abstractmethod
     def output(self) -> float:
         ...
 
     @abstractmethod
-    def activate(self, inputs: Vector) -> None:
+    def activate(self, inputs: Vector = None) -> float:
         ...
 
     @abstractmethod
@@ -19,5 +36,19 @@ class Perceptron(ABC):
         ...
 
     @abstractmethod
-    def attach_to(self, perceptron: "Perceptron"):
+    def attach_to(self, perceptron: "PerceptronInterface"):
         ...
+
+
+class ModelInterface(ABC):
+    @abstractmethod
+    def load(self, model: dict) -> None:
+        ...
+
+    @abstractmethod
+    def predict(self, inputs: Vector) -> Vector:
+        ...
+
+
+class TrainingModelInterface(ModelInterface, ABC):
+    ...
