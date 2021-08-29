@@ -1,4 +1,6 @@
 from unittest import TestCase
+
+from synapses.activator import StepActivator
 from synapses.perceptron import Perceptron
 
 
@@ -103,3 +105,23 @@ class TestPerceptron(TestCase):
             n_and.activate()
 
             self.assertEqual(n_and.output, ans)
+
+    def test_serialize(self):
+        a = StepActivator()
+        n = Perceptron([1, 2, 3], a)
+        self.assertDictEqual(n.serialize(), {
+            "w": [1, 2, 3],
+            "b": 1,
+            "a": a.serialize()
+        })
+
+    def test_deserialize(self):
+        a = StepActivator()
+        n = Perceptron.deserialize({
+            "w": [1, 2, 3],
+            "b": 1,
+            "a": a.serialize()
+        })
+        self.assertListEqual(n.weights, [1, 2, 3])
+        self.assertEqual(n.bias, 1)
+        self.assertIsInstance(n.activator, StepActivator)

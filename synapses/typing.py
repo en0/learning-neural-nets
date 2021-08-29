@@ -2,24 +2,42 @@ from abc import ABC, abstractmethod
 from typing import List, Callable
 
 Vector = List[float]
-Activator = Callable[[float], float]
+
+
+class ActivatorInterface(ABC):
+    @abstractmethod
+    def __call__(self, value: float) -> float:
+        ...
+
+    @abstractmethod
+    def serialize(self) -> dict:
+        ...
+
+    @abstractmethod
+    def compute_derivative(self, actual: float) -> float:
+        ...
 
 
 class PerceptronInterface(ABC):
 
     @property
     @abstractmethod
-    def activator(self) -> Activator:
+    def activator(self) -> ActivatorInterface:
         ...
 
     @property
     @abstractmethod
-    def bias(self) -> Activator:
+    def bias(self) -> ActivatorInterface:
         ...
 
     @property
     @abstractmethod
     def weights(self) -> Vector:
+        ...
+
+    @property
+    @abstractmethod
+    def inputs(self) -> Vector:
         ...
 
     @property
@@ -32,17 +50,44 @@ class PerceptronInterface(ABC):
         ...
 
     @abstractmethod
-    def signal(self, input: float) -> None:
+    def signal(self, value: float) -> None:
         ...
 
     @abstractmethod
     def attach_to(self, perceptron: "PerceptronInterface"):
         ...
 
+    @abstractmethod
+    def update_weights(self, weights: Vector) -> None:
+        ...
+
+    @abstractmethod
+    def serialize(self) -> dict:
+        ...
+
+    @classmethod
+    @abstractmethod
+    def deserialize(cls, desc: dict) -> "PerceptronInterface":
+        ...
+
 
 class ModelInterface(ABC):
+    @property
     @abstractmethod
-    def load(self, model: dict) -> None:
+    def name(self) -> str:
+        ...
+
+    @property
+    @abstractmethod
+    def desc(self) -> str:
+        ...
+
+    @abstractmethod
+    def deserialize(self, model: dict) -> None:
+        ...
+
+    @abstractmethod
+    def serialize(self) -> dict:
         ...
 
     @abstractmethod
@@ -51,4 +96,7 @@ class ModelInterface(ABC):
 
 
 class TrainingModelInterface(ModelInterface, ABC):
-    ...
+
+    @abstractmethod
+    def fit(self, inputs: Vector, outputs: Vector) -> float:
+        ...

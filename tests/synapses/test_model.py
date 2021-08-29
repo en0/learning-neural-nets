@@ -26,64 +26,90 @@ class ModelTests(unittest.TestCase):
             ]
         }
 
-    def test_load_sets_name(self):
+    def test_deserialize_sets_name(self):
         m = Model()
-        m.load(self.xor_model_description)
+        m.deserialize(self.xor_model_description)
         self.assertEqual(m.name, self.xor_model_description["name"])
 
-    def test_load_sets_description(self):
+    def test_deserialize_sets_description(self):
         m = Model()
-        m.load(self.xor_model_description)
+        m.deserialize(self.xor_model_description)
         self.assertEqual(m.desc, self.xor_model_description["desc"])
 
-    def test_load_creates_layers(self):
+    def test_deserialize_creates_layers(self):
         m = Model()
-        m.load(self.xor_model_description)
-        self.assertEqual(len(m.layers), 2)
+        m.deserialize(self.xor_model_description)
+        self.assertEqual(len(m._layers), 2)
 
-    def test_load_adds_correct_count_of_neurons(self):
+    def test_deserialize_adds_correct_count_of_neurons(self):
         m = Model()
-        m.load(self.xor_model_description)
-        self.assertEqual(len(m.layers[0]), 2)
-        self.assertEqual(len(m.layers[1]), 1)
+        m.deserialize(self.xor_model_description)
+        self.assertEqual(len(m._layers[0]), 2)
+        self.assertEqual(len(m._layers[1]), 1)
 
-    def test_load_adds_PerceptronInterface(self):
+    def test_deserialize_adds_PerceptronInterface(self):
         m = Model()
-        m.load(self.xor_model_description)
-        for layer in m.layers:
+        m.deserialize(self.xor_model_description)
+        for layer in m._layers:
             for n in layer:
                 self.assertIsInstance(n, PerceptronInterface)
 
-    def test_load_sets_perceptron_weights(self):
+    def test_deserialize_sets_perceptron_weights(self):
         m = Model()
-        m.load(self.xor_model_description)
-        for layer, layer_desc in zip(m.layers, self.xor_model_description["layers"]):
+        m.deserialize(self.xor_model_description)
+        for layer, layer_desc in zip(m._layers, self.xor_model_description["layers"]):
             for n, desc in zip(layer, layer_desc):
                 self.assertListEqual(n.weights, desc["w"])
 
-    def test_load_sets_perceptron_activator(self):
+    def test_deserialize_sets_perceptron_activator(self):
         m = Model()
-        m.load(self.xor_model_description)
-        for layer in m.layers:
+        m.deserialize(self.xor_model_description)
+        for layer in m._layers:
             for n in layer:
                 self.assertIsInstance(n.activator, StepActivator)
 
-    def test_load_sets_perceptron_bias(self):
+    def test_deserialize_sets_perceptron_bias(self):
         m = Model()
-        m.load(self.xor_model_description)
-        for layer, layer_desc in zip(m.layers, self.xor_model_description["layers"]):
+        m.deserialize(self.xor_model_description)
+        for layer, layer_desc in zip(m._layers, self.xor_model_description["layers"]):
             for n, desc in zip(layer, layer_desc):
                 self.assertEqual(n.bias, desc["b"])
 
     @patch("synapses.perceptron.Perceptron.attach_to")
-    def test_load_attaches_perceptrons(self, attach_method):
+    def test_deserialize_attaches_perceptrons(self, attach_method):
         m = Model()
-        m.load(self.xor_model_description)
+        m.deserialize(self.xor_model_description)
         attach_method.assert_called()
 
     def test_prediction(self):
         m = Model()
-        m.load(self.xor_model_description)
+        m.deserialize(self.xor_model_description)
         for i, ans in [([1, 1], [0]), ([1, 0], [1]), ([0, 1], [1]), ([0, 0], [0])]:
             actual = m.predict(i)
             self.assertListEqual(actual, ans)
+
+    def test_serialize_includes_name(self):
+        m = Model()
+        m.deserialize(self.xor_model_description)
+        ans = m.serialize()
+        self.assertEqual(ans["name"], self.xor_model_description["name"])
+
+    def test_serialize_includes_desc(self):
+        m = Model()
+        m.deserialize(self.xor_model_description)
+        ans = m.serialize()
+        self.assertEqual(ans["desc"], self.xor_model_description["desc"])
+
+    def test_serialize_includes_layers(self):
+        m = Model()
+        m.deserialize(self.xor_model_description)
+        ans = m.serialize()
+        self.assertEqual(len(ans["layers"]), len(self.xor_model_description["layers"]))
+
+    def test_serialize_serialized_neurons(self):
+        m = Model()
+        m.deserialize(self.xor_model_description)
+        ans = m.serialize()
+        for layer, expected_layer in zip(ans["layers"], self.xor_model_description["layers"]):
+            for neuron, expected_neuron in zip(layer, expected_layer):
+                self.assertDictEqual(neuron, expected_neuron)

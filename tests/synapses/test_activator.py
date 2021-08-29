@@ -1,5 +1,5 @@
 import unittest
-from synapses.activator import construct_activator, ActivatorEnum, StepActivator
+from synapses.activator import ActivatorEnum, StepActivator, deserialize_activator, LogisticActivator
 
 
 class StepActivatorTests(unittest.TestCase):
@@ -18,12 +18,36 @@ class StepActivatorTests(unittest.TestCase):
         self.assertEqual(a(1.1), 0)
         self.assertEqual(a(10.1), 1)
 
+    def test_serialize(self):
+        activator = StepActivator(100)
+        self.assertDictEqual(activator.serialize(), {
+            "e": ActivatorEnum.Step,
+            "p": {"threshold": 100}
+        })
+
+
+class LogisticTest(unittest.TestCase):
+
+    def test_serialize(self):
+        self.assertDictEqual(LogisticActivator().serialize(), {"e": ActivatorEnum.Logistic})
+
+    def test_deserialize(self):
+        a = deserialize_activator({"e": ActivatorEnum.Logistic})
+        self.assertIsInstance(a, LogisticActivator)
+
+    def test_accuracy(self):
+        a = LogisticActivator()
+        self.assertEqual(0.5932699921071872, a(0.3775))
+
 
 class ConstructActivatorTests(unittest.TestCase):
-    def test_construct_step_activator(self):
-        self.assertIsInstance(construct_activator(ActivatorEnum.Step), StepActivator)
 
-    def test_construct_step_activator_sets_limit(self):
-        activator = construct_activator(ActivatorEnum.Step, threshold=100)
-        self.assertEqual(activator(100.1), 1)
-        self.assertEqual(activator(99.9), 0)
+    def test_deserialize_step_activator(self):
+        a = deserialize_activator({
+            "e": ActivatorEnum.Step,
+            "p": {"threshold": 100}
+        })
+        self.assertIsInstance(a, StepActivator)
+        self.assertEqual(a(100.1), 1)
+        self.assertEqual(a(99.9), 0)
+

@@ -1,9 +1,25 @@
 from enum import Enum
+import math
 
-from synapses.typing import Activator
+from synapses.typing import ActivatorInterface
 
 
-class StepActivator(Activator):
+class ActivatorEnum(Enum):
+    Step = 1
+    Pass = 2
+    Logistic = 3
+
+
+class StepActivator(ActivatorInterface):
+
+    def serialize(self) -> dict:
+        return {
+            "e": ActivatorEnum.Step,
+            "p": {"threshold": self._threshold}
+        }
+
+    def compute_derivative(self, actual: float) -> float:
+        raise NotImplementedError()
 
     def __init__(self, threshold: float = 0):
         self._threshold = threshold
@@ -12,11 +28,33 @@ class StepActivator(Activator):
         return 1 if value > self._threshold else 0
 
 
-class ActivatorEnum(Enum):
-    Step = 1
+class PassActivator(ActivatorInterface):
+
+    def serialize(self) -> dict:
+        return {"e": ActivatorEnum.Pass}
+
+    def compute_derivative(self, actual: float) -> float:
+        raise NotImplementedError()
+
+    def __call__(self, value: float) -> float:
+        return value
 
 
-def construct_activator(enum: ActivatorEnum, **kwargs):
+class LogisticActivator(ActivatorInterface):
+
+    def serialize(self) -> dict:
+        return {"e": ActivatorEnum.Logistic}
+
+    def compute_derivative(self, actual: float) -> float:
+        return actual * (1 - actual)
+
+    def __call__(self, value: float) -> float:
+        return 1.0 / (1 + math.e ** -value)
+
+
+def deserialize_activator(desc: dict) -> ActivatorInterface:
     return {
-        ActivatorEnum.Step: StepActivator
-    }[enum](**kwargs)
+        ActivatorEnum.Step: StepActivator,
+        ActivatorEnum.Pass: PassActivator,
+        ActivatorEnum.Logistic: LogisticActivator,
+    }[desc["e"]](**desc.get("p", {}))
