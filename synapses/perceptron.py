@@ -6,13 +6,10 @@ class Perceptron(PerceptronInterface):
 
     @classmethod
     def deserialize(cls, desc: dict) -> PerceptronInterface:
-        return cls(weights=desc["w"],
-                   activator=deserialize_activator(desc["a"]),
-                   bias=desc["b"])
+        return cls(weights=desc["w"], activator=deserialize_activator(desc["a"]))
 
     @property
     def weights(self) -> Vector:
-        # Remove bias from output
         return self._weights[1:]
 
     @property
@@ -20,25 +17,21 @@ class Perceptron(PerceptronInterface):
         return self._activator
 
     @property
-    def bias(self) -> ActivatorInterface:
-        return self._bias
-
-    @property
     def inputs(self) -> Vector:
-        return self._inputs
+        return self._last_inputs
 
     @property
     def output(self) -> float:
         return self._output
 
     def update_weights(self, weights: Vector) -> None:
+        #print(f"Update Weights old=({self._weights}), new=({weights})")
         for i, weight in enumerate(weights):
             self._weights[i+1] = weight
 
     def serialize(self) -> dict:
         return {
             "w": self._weights,
-            "b": self._bias,
             "a": self.activator.serialize(),
         }
 
@@ -50,19 +43,15 @@ class Perceptron(PerceptronInterface):
         if inputs:
             self._inputs = inputs
 
-        #if not self._inputs:
-            #raise Exception("Perceptron received no inputs.")
-
         self._output = self._activator(sum(map(
             lambda v: v[0] * v[1],
-            zip([self._bias] + self._inputs, self._weights)
+            zip([1.0] + self._inputs, self._weights)
         )))
-
-        #self._inputs = []
 
         for n in self._attached:
             n.signal(self.output)
-
+        self._last_inputs = self._inputs.copy()
+        self._inputs = []
         return self.output
 
     def attach_to(self, perceptron: PerceptronInterface):
@@ -72,12 +61,11 @@ class Perceptron(PerceptronInterface):
             self,
             weights: Vector,
             activator: ActivatorInterface,
-            bias: float = 1
     ):
         self._output: float = None
         self._inputs: Vector = []
+        self._last_inputs: Vector = []
 
         self._weights = weights
         self._activator = activator
-        self._bias = bias
         self._attached = []

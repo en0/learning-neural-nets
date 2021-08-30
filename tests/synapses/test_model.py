@@ -15,13 +15,13 @@ class ModelTests(unittest.TestCase):
             "layers": [
                 [
                     # nand
-                    {"b": 1, "w": [1, -0.5, -0.5], "a": {"e": ActivatorEnum.Step, "p": {"threshold": 0}}},
+                    {"w": [1, -0.5, -0.5], "a": {"e": ActivatorEnum.Step, "p": {"threshold": 0}}},
                     # or
-                    {"b": 1, "w": [0, 0.25, 0.25], "a": {"e": ActivatorEnum.Step, "p": {"threshold": 0}}}
+                    {"w": [0, 0.25, 0.25], "a": {"e": ActivatorEnum.Step, "p": {"threshold": 0}}}
                 ],
                 [
                     # and
-                    {"b": 1, "w": [-0.25, 0.25, 0.25], "a": {"e": ActivatorEnum.Step, "p": {"threshold": 0}}}
+                    {"w": [-0.25, 0.25, 0.25], "a": {"e": ActivatorEnum.Step, "p": {"threshold": 0}}}
                 ]
             ]
         }
@@ -67,13 +67,6 @@ class ModelTests(unittest.TestCase):
         for layer in m._layers:
             for n in layer:
                 self.assertIsInstance(n.activator, StepActivator)
-
-    def test_deserialize_sets_perceptron_bias(self):
-        m = Model()
-        m.deserialize(self.xor_model_description)
-        for layer, layer_desc in zip(m._layers, self.xor_model_description["layers"]):
-            for n, desc in zip(layer, layer_desc):
-                self.assertEqual(n.bias, desc["b"])
 
     @patch("synapses.perceptron.Perceptron.attach_to")
     def test_deserialize_attaches_perceptrons(self, attach_method):

@@ -1,8 +1,19 @@
-from typing import List
+from typing import List, Union, Tuple
+from random import uniform
 
 from synapses.perceptron import Perceptron
-from synapses.typing import TrainingModelInterface, ModelInterface, Vector, PerceptronInterface
+from synapses.typing import TrainingModelInterface, ModelInterface, Vector, PerceptronInterface, ActivatorInterface
 
+
+def _serialize(name, desc, layers) -> dict:
+    return {
+        "name": name,
+        "desc": desc,
+        "layers": [
+            [n.serialize() for n in layer]
+            for layer in layers
+        ],
+    }
 
 class Model(ModelInterface):
 
@@ -15,6 +26,7 @@ class Model(ModelInterface):
         return self._desc
 
     def deserialize(self, model: dict) -> None:
+        self._reset()
         self._name = model["name"]
         self._desc = model["desc"]
         for layer_desc in model["layers"]:
@@ -28,14 +40,7 @@ class Model(ModelInterface):
             self._layers.append(layer)
 
     def serialize(self) -> dict:
-        return {
-            "name": self._name,
-            "desc": self._desc,
-            "layers": [
-                [n.serialize() for n in layer]
-                for layer in self._layers
-            ],
-        }
+        return _serialize(self._name, self._desc, self._layers)
 
     def predict(self, inputs: Vector) -> Vector:
         for neuron in self._layers[0]:
@@ -44,6 +49,11 @@ class Model(ModelInterface):
             for neuron in layer:
                 neuron.activate()
         return [n.output for n in self._layers[-1]]
+
+    def _reset(self):
+        self._name: str = None
+        self._desc: str = None
+        self._layers: List[List[PerceptronInterface]] = []
 
     def __init__(self):
         self._name: str = None
@@ -99,6 +109,39 @@ class TrainingModel(Model, TrainingModelInterface):
             neuron.update_weights(weights)
 
         return total_error
+
+    def generate(
+            self,
+            name: str,
+            desc: str,
+            input_width: int,
+            layer_width: List[int],
+            layer_activators: Union[List[ActivatorInterface], ActivatorInterface],
+            random_range: Tuple[float, float] = (0.5, 1.0)
+    ) -> None:
+
+        def as_iterator(thing):
+            while not isinstance(thing, list):
+                yield thing
+            for o in thing:
+                yield o
+
+        layer_desc = zip(
+            [input_width] + layer_width[:-1],
+            layer_width,
+            as_iterator(layer_activators)
+        )
+
+        _layers = []
+        for i_width, l_width, activator in layer_desc:
+            layer = [
+                Perceptron(
+                    weights=[0.0] + [uniform(*random_range) for i in range(i_width)],
+                    activator=activator,
+                ) for _ in range(l_width)
+            ]
+            _layers.append(layer)
+        self.deserialize(_serialize(name, desc, _layers))
 
     def _compute_total_error(self, actuals: Vector, ideals: Vector) -> float:
         total_error = 0

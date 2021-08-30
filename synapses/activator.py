@@ -1,13 +1,7 @@
-from enum import Enum
+## https://ml-cheatsheet.readthedocs.io/en/latest/activation_functions.html
 import math
 
-from synapses.typing import ActivatorInterface
-
-
-class ActivatorEnum(Enum):
-    Step = 1
-    Pass = 2
-    Logistic = 3
+from synapses.typing import ActivatorInterface, ActivatorEnum
 
 
 class StepActivator(ActivatorInterface):
@@ -19,7 +13,7 @@ class StepActivator(ActivatorInterface):
         }
 
     def compute_derivative(self, actual: float) -> float:
-        raise NotImplementedError()
+        return 0
 
     def __init__(self, threshold: float = 0):
         self._threshold = threshold

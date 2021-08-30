@@ -1,7 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import List, Callable
+from enum import Enum
+from typing import List, Callable, Tuple, Union
 
 Vector = List[float]
+
+
+class ActivatorEnum(Enum):
+    Step = 1
+    Pass = 2
+    Logistic = 3
 
 
 class ActivatorInterface(ABC):
@@ -23,11 +30,6 @@ class PerceptronInterface(ABC):
     @property
     @abstractmethod
     def activator(self) -> ActivatorInterface:
-        ...
-
-    @property
-    @abstractmethod
-    def bias(self) -> ActivatorInterface:
         ...
 
     @property
@@ -99,4 +101,16 @@ class TrainingModelInterface(ModelInterface, ABC):
 
     @abstractmethod
     def fit(self, inputs: Vector, outputs: Vector) -> float:
+        ...
+
+    @abstractmethod
+    def generate(
+        self,
+        name: str,
+        desc: str,
+        input_width: int,
+        layer_width: List[int],
+        layer_activators: Union[List[ActivatorInterface], ActivatorInterface],
+        random_range: Tuple[float, float] = (0.5, 1.0)
+    ) -> None:
         ...

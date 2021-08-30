@@ -6,24 +6,21 @@ from synapses.perceptron import Perceptron
 
 class TestPerceptron(TestCase):
 
-    def create_neuron(self, w, a):
-        return Perceptron(w, a)
+    def create_neuron(self, w, a, b):
+        return Perceptron(weights=[b] + w, activator=a)
 
     def signal_and_activate(self, n, inputs):
-        for i in inputs:
-            n.signal(i)
-        n.activate()
-        return n.output
+        return n.activate(inputs)
 
     def test_simple(self):
-        neuron = self.create_neuron([1, 1, 1], lambda x: x)
+        neuron = self.create_neuron([1, 1], lambda x: x, 1)
         ans = self.signal_and_activate(neuron, [2, 3])
         self.assertEqual(int(ans), 6)
 
     def test_attached(self):
-        n1 = self.create_neuron([1, 1, 1], lambda x: x)
-        n2 = self.create_neuron([1, 1, 1], lambda x: x)
-        n3 = self.create_neuron([1, 1, 1], lambda x: x)
+        n1 = self.create_neuron([1, 1], lambda x: x, 1)
+        n2 = self.create_neuron([1, 1], lambda x: x, 1)
+        n3 = self.create_neuron([1, 1], lambda x: x, 1)
 
         n2.attach_to(n1)
         n3.attach_to(n1)
@@ -44,7 +41,7 @@ class TestPerceptron(TestCase):
         self.assertEqual(n1.output, 13)
 
     def test_and(self):
-        n = self.create_neuron([-0.25, 0.25, 0.25], lambda x: 1 if x > 0 else 0)
+        n = self.create_neuron([0.25, 0.25], lambda x: 1 if x > 0 else 0, -0.25)
         ans = self.signal_and_activate(n, [1, 1])
         self.assertEqual(ans, 1)
 
@@ -58,7 +55,7 @@ class TestPerceptron(TestCase):
         self.assertEqual(ans, 0)
 
     def test_or(self):
-        n = self.create_neuron([0, 0.25, 0.25], lambda x: 1 if x > 0 else 0)
+        n = self.create_neuron([0.25, 0.25], lambda x: 1 if x > 0 else 0, 0)
         ans = self.signal_and_activate(n, [1, 1])
         self.assertEqual(ans, 1)
 
@@ -72,7 +69,7 @@ class TestPerceptron(TestCase):
         self.assertEqual(ans, 0)
 
     def test_nand(self):
-        n = self.create_neuron([1, -0.5, -0.5], lambda x: 1 if x > 0 else 0)
+        n = self.create_neuron([-0.5, -0.5], lambda x: 1 if x > 0 else 0, 1)
         ans = self.signal_and_activate(n, [1, 1])
         self.assertEqual(ans, 0)
 
@@ -86,9 +83,9 @@ class TestPerceptron(TestCase):
         self.assertEqual(ans, 1)
 
     def test_xor(self):
-        n_nand = self.create_neuron([1, -0.5, -0.5], lambda x: 1 if x > 0 else 0)
-        n_and = self.create_neuron([-0.25, 0.25, 0.25], lambda x: 1 if x > 0 else 0)
-        n_or = self.create_neuron([0, 0.25, 0.25], lambda x: 1 if x > 0 else 0)
+        n_nand = self.create_neuron([-0.5, -0.5], lambda x: 1 if x > 0 else 0, 1)
+        n_and = self.create_neuron([0.25, 0.25], lambda x: 1 if x > 0 else 0, -0.25)
+        n_or = self.create_neuron([0.25, 0.25], lambda x: 1 if x > 0 else 0, 0)
 
         n_nand.attach_to(n_and)
         n_or.attach_to(n_and)
@@ -104,6 +101,8 @@ class TestPerceptron(TestCase):
             n_or.activate()
             n_and.activate()
 
+            print("IDEAL:", a, b, ans)
+            print("ACTUAL:", a, b, n_and.output)
             self.assertEqual(n_and.output, ans)
 
     def test_serialize(self):
@@ -111,7 +110,6 @@ class TestPerceptron(TestCase):
         n = Perceptron([1, 2, 3], a)
         self.assertDictEqual(n.serialize(), {
             "w": [1, 2, 3],
-            "b": 1,
             "a": a.serialize()
         })
 
@@ -119,9 +117,7 @@ class TestPerceptron(TestCase):
         a = StepActivator()
         n = Perceptron.deserialize({
             "w": [1, 2, 3],
-            "b": 1,
             "a": a.serialize()
         })
         self.assertListEqual(n.weights, [1, 2, 3])
-        self.assertEqual(n.bias, 1)
         self.assertIsInstance(n.activator, StepActivator)
